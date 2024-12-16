@@ -16,30 +16,101 @@ datasource db {
 
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  // role     Role     @default(CUSTOMER)
-  // orders   Order[]  
+  id       String    @id @default(uuid()) @map("id_user")
+  name     String    @map("nama") @db.VarChar(255)
+  email    String    @unique @db.VarChar(110)
+  phone    String    @unique @db.VarChar(20) @map("nomor_hp")
+  password String    @db.VarChar(110)
+  role     Role      @default(CUSTOMER) @map("peran")
+  status   Status    @default(ACTIVE) @map("status_akun")
+  orders   Order[]   @relation("UserOrders")
+  reviews  Review[]  @relation("UserReviews")
+  createdAt DateTime @default(now()) @map("tgl_registrasi") @db.Timestamp(0)
 
   @@map("users")
 }
 
-// model Order {
-//   id             Int         @id @default(autoincrement())
-//   customerId     Int
-//   driverId       Int?
-//   status         OrderStatus @default(PENDING)
-//   paymentMethod  String
-//   rating         Int?
-//   pickupLocation String
-//   dropLocation   String
-//   createdAt      DateTime    @default(now())
-//   updatedAt      DateTime    @updatedAt
+model Driver {
+  id             String    @id @default(uuid()) @map("id_driver")
+  name           String    @map("nama_driver") @db.VarChar(255)
+  phone          String    @unique @db.VarChar(20) @map("nomor_hp_driver")
+  vehicleType    String    @map("jenis_kendaraan") @db.VarChar(50)
+  vehicleNumber  String    @map("nomor_kendaraan") @db.VarChar(20)
+  orders         Order[]   @relation("DriverOrders")
+  rating         Decimal?  @default(0.0) @map("rating_driver") @db.Decimal(3, 2)
+  status         DriverStatus @default(AVAILABLE) @map("status_driver")
+  createdAt      DateTime  @default(now()) @map("tgl_registrasi") @db.Timestamp(0)
 
-//   customer User @relation("CustomerOrders", fields: [customerId], references: [id])
-//   driver   User? @relation("DriverOrders", fields: [driverId], references: [id])
+   reviews        Review[]  @relation("DriverReviews", fields: [], references: [])
 
-//   @@map("orders")
-// }
+
+  @@map("drivers")
+}
+
+model Order {
+  id             String        @id @default(uuid()) @map("id_order")
+  userId         String        @map("id_user")
+  driverId       String?       @map("id_driver")
+  pickupLocation String        @map("lokasi_penjemputan")
+  dropLocation   String        @map("lokasi_pengantaran")
+  status         OrderStatus   @default(PENDING) @map("status_pesanan")
+  paymentMethodId String      @map("id_metode_pembayaran") // Field untuk relasi ke PaymentMethod
+  paymentMethod  PaymentMethod @relation(fields: [paymentMethodId], references: [id]) // Menambahkan relasi
+  totalPrice     Decimal       @default(0.0) @map("total_pembayaran") @db.Decimal(10, 2)
+  createdAt      DateTime      @default(now()) @map("tgl_pemesanan")
+  updatedAt      DateTime      @updatedAt
+
+  user   User   @relation("UserOrders", fields: [userId], references: [id])
+  driver Driver? @relation("DriverOrders", fields: [driverId], references: [id])
+
+  @@map("orders")
+}
+
+
+model Review {
+  id        String  @id @default(uuid()) @map("id_review")
+  userId    String  @map("id_user")
+  driverId  String? @map("id_driver")
+  rating    Int     @map("rating")
+  comment   String? @map("komentar") @db.Text
+  createdAt DateTime @default(now()) @map("tgl_review")
+
+  uuser   User   @relation("UserReviews", fields: [userId], references: [id])
+  driver Driver? @relation("DriverReviews", fields: [driverId], references: [id])
+
+
+  @@map("reviews")
+}
+
+model PaymentMethod {
+  id   String  @id @default(uuid()) @map("id_metode_pembayaran")
+  name String  @map("nama_metode") @db.VarChar(50)
+  Order Order[]
+
+  @@map("metode_pembayaran")
+}
+
+enum Role {
+  CUSTOMER
+  DRIVER
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
