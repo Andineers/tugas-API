@@ -25,7 +25,7 @@ model User {
   status   Status    @default(ACTIVE) @map("status_akun")
   orders   Order[]   @relation("UserOrders")
   reviews  Review[]  @relation("UserReviews")
-  createdAt DateTime @default(now()) @map("tgl_registrasi") @db.Timestamp(0)
+  createdAt DateTime @default(now()) @map("tgl_registrasi") @db.Timestamp(0) //ini perlu gak si?
 
   @@map("users")
 }
@@ -54,8 +54,8 @@ model Order {
   pickupLocation String        @map("lokasi_penjemputan")
   dropLocation   String        @map("lokasi_pengantaran")
   status         OrderStatus   @default(PENDING) @map("status_pesanan")
-  paymentMethodId String      @map("id_metode_pembayaran") // Field untuk relasi ke PaymentMethod
-  paymentMethod  PaymentMethod @relation(fields: [paymentMethodId], references: [id]) // Menambahkan relasi
+  paymentMethodId String      @map("id_metode_pembayaran") // field untuk relasi ke PaymentMethod
+  paymentMethod  PaymentMethod @relation(fields: [paymentMethodId], references: [id]) // menambahkan relasi
   totalPrice     Decimal       @default(0.0) @map("total_pembayaran") @db.Decimal(10, 2)
   createdAt      DateTime      @default(now()) @map("tgl_pemesanan")
   updatedAt      DateTime      @updatedAt
