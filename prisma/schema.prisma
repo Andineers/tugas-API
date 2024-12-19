@@ -13,104 +13,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  CUSTOMER
+  DRIVER
+}
 
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PICKED_UP
+  COMPLETED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  EWALLET
+}
+
+enum DriverStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
 
 model User {
-  id       String    @id @default(uuid()) @map("id_user")
-  name     String    @map("nama") @db.VarChar(255)
-  email    String    @unique @db.VarChar(110)
-  phone    String    @unique @db.VarChar(20) @map("nomor_hp")
-  password String    @db.VarChar(110)
-  role     Role      @default(CUSTOMER) @map("peran")
-  status   Status    @default(ACTIVE) @map("status_akun")
-  orders   Order[]   @relation("UserOrders")
-  reviews  Review[]  @relation("UserReviews")
-  createdAt DateTime @default(now()) @map("tgl_registrasi") @db.Timestamp(0) //ini perlu gak si?
-
-  @@map("users")
+  id        String  @id @default(uuid())
+  name      String
+  email     String  @unique
+  password  String
+  role      Role    @default(CUSTOMER)
+  orders    Order[] @relation("UserOrders")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Driver {
-  id             String    @id @default(uuid()) @map("id_driver")
-  name           String    @map("nama_driver") @db.VarChar(255)
-  phone          String    @unique @db.VarChar(20) @map("nomor_hp_driver")
-  vehicleType    String    @map("jenis_kendaraan") @db.VarChar(50)
-  vehicleNumber  String    @map("nomor_kendaraan") @db.VarChar(20)
-  orders         Order[]   @relation("DriverOrders")
-  rating         Decimal?  @default(0.0) @map("rating_driver") @db.Decimal(3, 2)
-  status         DriverStatus @default(AVAILABLE) @map("status_driver")
-  createdAt      DateTime  @default(now()) @map("tgl_registrasi") @db.Timestamp(0)
-
-   reviews        Review[]  @relation("DriverReviews", fields: [], references: [])
-
-
+  id             String    @id @default(uuid())
+  name           String
+  phone          String    @unique
+  vehicleType    String
+  vehicleNumber  String
+  orders         Order[]   @relation("DriverOrders") 
+  rating         Decimal?  @default(0.0) @db.Decimal(3, 2)
+  status         DriverStatus @default(AVAILABLE)
+  createdAt      DateTime  @default(now())
+  
   @@map("drivers")
 }
 
 model Order {
-  id             String        @id @default(uuid()) @map("id_order")
-  userId         String        @map("id_user")
-  driverId       String?       @map("id_driver")
-  pickupLocation String        @map("lokasi_penjemputan")
-  dropLocation   String        @map("lokasi_pengantaran")
-  status         OrderStatus   @default(PENDING) @map("status_pesanan")
-  paymentMethodId String      @map("id_metode_pembayaran") // field untuk relasi ke PaymentMethod
-  paymentMethod  PaymentMethod @relation(fields: [paymentMethodId], references: [id]) // menambahkan relasi
-  totalPrice     Decimal       @default(0.0) @map("total_pembayaran") @db.Decimal(10, 2)
-  createdAt      DateTime      @default(now()) @map("tgl_pemesanan")
+  id             String        @id @default(uuid())
+  userId         String
+  driverId       String?       
+  dropLocation   String
+  status         OrderStatus   @default(PENDING)
+  paymentMethod  PaymentMethod
+  totalPrice     Decimal       @default(0.0) @db.Decimal(10, 2)
+  createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  user   User   @relation("UserOrders", fields: [userId], references: [id])
+  user   User   @relation("UserOrders", fields: [userId], references: [id]) 
   driver Driver? @relation("DriverOrders", fields: [driverId], references: [id])
+  rating         Rating?
 
   @@map("orders")
 }
 
 
-model Review {
-  id        String  @id @default(uuid()) @map("id_review")
-  userId    String  @map("id_user")
-  driverId  String? @map("id_driver")
-  rating    Int     @map("rating")
-  comment   String? @map("komentar") @db.Text
-  createdAt DateTime @default(now()) @map("tgl_review")
-
-  uuser   User   @relation("UserReviews", fields: [userId], references: [id])
-  driver Driver? @relation("DriverReviews", fields: [driverId], references: [id])
-
-
-  @@map("reviews")
-}
-
-model PaymentMethod {
-  id   String  @id @default(uuid()) @map("id_metode_pembayaran")
-  name String  @map("nama_metode") @db.VarChar(50)
-  Order Order[]
-
-  @@map("metode_pembayaran")
-}
-
-enum Role {
-  CUSTOMER
-  DRIVER
-  ADMIN
-}
-
-enum Status {
-  ACTIVE
-  INACTIVE
-  BANNED
-}
-
-enum DriverStatus {
-  AVAILABLE
-  UNAVAILABLE
-}
-
-enum OrderStatus {
-  PENDING
-  ACCEPTED
-  IN_PROGRESS
-  COMPLETED
-  CANCELED
+model Rating {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  rating    Int
+  comment   String?
+  
+ 
+  order     Order    @relation(fields: [orderId], references: [id])
 }
