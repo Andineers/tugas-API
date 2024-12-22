@@ -18,7 +18,6 @@ enum Role {
   DRIVER
 }
 
-
 enum OrderStatus {
   PENDING
   ACCEPTED
@@ -26,68 +25,89 @@ enum OrderStatus {
   COMPLETED
 }
 
-enum PaymentMethod {
+enum MetodePembayaranEnum {
   CASH
   CREDIT_CARD
   EWALLET
 }
 
-enum DriverStatus {
+enum StatusPengemudi {
   AVAILABLE
   BUSY
   OFFLINE
 }
 
-model User {
-  id        String  @id @default(uuid())
-  name      String
-  email     String  @unique
-  password  String
-  role      Role    @default(CUSTOMER)
-  orders    Order[] @relation("UserOrders")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Pengguna {
+  id_pengguna     String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  phone           String
+  password        String
+  tgl_registrasi  DateTime @default(now())
+  status_pengguna String
+
+  @@map("pengguna")
 }
 
-model Driver {
-  id             String    @id @default(uuid())
-  name           String
-  phone          String    @unique
-  vehicleType    String
-  vehicleNumber  String
-  orders         Order[]   @relation("DriverOrders") 
-  rating         Decimal?  @default(0.0) @db.Decimal(3, 2)
-  status         DriverStatus @default(AVAILABLE)
-  createdAt      DateTime  @default(now())
-  
-  @@map("drivers")
+model Pengemudi {
+  id_pengemudi         Int             @id @default(autoincrement())
+  nama_pengemudi       String
+  email_pengemudi      String          @unique
+  phone_pengemudi      String
+  merek_tipe_kendaraan String
+  plat_nomor           String
+  status_pengemudi     StatusPengemudi @default(AVAILABLE)
+  longitude            Float
+  latitude             Float
+  tgl_registrasi       DateTime        @default(now())
+  password             String
+
+  @@map("pengemudi")
 }
 
 model Order {
-  id             String        @id @default(uuid())
-  userId         String
-  driverId       String?       
-  dropLocation   String
-  status         OrderStatus   @default(PENDING)
-  paymentMethod  PaymentMethod
-  totalPrice     Decimal       @default(0.0) @db.Decimal(10, 2)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  user   User   @relation("UserOrders", fields: [userId], references: [id]) 
-  driver Driver? @relation("DriverOrders", fields: [driverId], references: [id])
-  rating         Rating?
+  id_order             String           @id @default(uuid())
+  id_pengguna          String
+  id_pengemudi         Int
+  longitude_jemput     Float
+  latitude_jemput      Float
+  latitude_tujuan      Float
+  longitude_tujuan     Float
+  waktu_order          DateTime         @default(now())
+  waktu_terima_order   DateTime?
+  waktu_jemput         DateTime?
+  waktu_sampai         DateTime?
+  total_harga          Decimal          @default(0.0) @db.Decimal(10, 2)
+  harga_bersih         Decimal          @default(0.0) @db.Decimal(10, 2)
+  potongan_perusahaan  Decimal          @default(0.0) @db.Decimal(10, 2)
+  status_perjalanan    String
+  id_metode_pembayaran MetodePembayaranEnum
 
   @@map("orders")
 }
 
+model Setting {
+  id_setting   String @id @default(uuid())
+  nama_setting String
+  value        String
 
-model Rating {
-  id        String   @id @default(uuid())
-  orderId   String   @unique
-  rating    Int
-  comment   String?
-  
- 
-  order     Order    @relation(fields: [orderId], references: [id])
+  @@map("setting")
 }
+
+model Ulasan {
+  id_ulasan      String   @id @default(uuid())
+  id_order       String
+  rating         Int
+  komentar       String
+  tanggal_ulasan DateTime @default(now())
+
+  @@map("ulasan")
+}
+
+model MetodePembayaran {
+  id_metode_pembayaran String @id @default(uuid())
+  nama_metode          String
+
+  @@map("metode_pembayaran")
+}
+
